@@ -36,6 +36,22 @@ export default function ProductsPage() {
 
   useEffect(() => {
     const loadProducts = async () => {
+      // Небольшая задержка для обеспечения завершения гидратации Zustand
+      // Это важно, чтобы не перезаписать созданные пользователем продукты
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      // Проверяем состояние после возможной гидратации
+      const currentState = useProductsStore.getState();
+      
+      // Если уже есть продукты в store (из localStorage или созданные пользователем),
+      // и они были загружены из API ранее, не загружаем снова
+      if (currentState.hasLoadedFromAPI) {
+        setLoading(false);
+        return;
+      }
+      
+      // Если есть продукты, но hasLoadedFromAPI = false, это значит они созданы пользователем
+      // В этом случае все равно загружаем из API, но setProducts объединит их
       setLoading(true);
       try {
         const fetchedProducts = await fetchProducts();

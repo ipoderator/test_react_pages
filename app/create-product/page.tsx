@@ -76,20 +76,47 @@ export default function CreateProductPage() {
         category: formData.category.trim(),
         image: formData.image.trim(),
       };
-      const previousCount = products.length;
-      console.log('Submitting form, products before:', previousCount);
-      addProduct(productData);
-      // Увеличиваем задержку для гарантированного сохранения состояния перед редиректом
-      await new Promise(resolve => setTimeout(resolve, 500));
-      // Проверяем, что продукт был добавлен
-      const currentCount = useProductsStore.getState().products.length;
-      console.log('Products before:', previousCount, 'Products after:', currentCount);
-      if (currentCount > previousCount) {
-        console.log('Product successfully added, redirecting...');
-        router.replace('/products');
-      } else {
-        console.error('Product was not added!');
-        alert('Ошибка: продукт не был добавлен. Проверьте консоль браузера.');
+      
+      try {
+        // Добавляем продукт
+        addProduct(productData);
+        
+        // Ждем, чтобы Zustand успел сохранить в localStorage
+        // Проверяем несколько раз, что продукт был добавлен
+        let attempts = 0;
+        const maxAttempts = 20;
+        let productFound = false;
+        
+        while (attempts < maxAttempts && !productFound) {
+          await new Promise(resolve => setTimeout(resolve, 50));
+          const currentState = useProductsStore.getState();
+          productFound = currentState.products.some(
+            p => p.title === productData.title && 
+                 Math.abs(p.price - productData.price) < 0.01 &&
+                 p.description === productData.description &&
+                 p.category === productData.category
+          );
+          
+          if (productFound) {
+            // Дополнительная задержка для гарантии сохранения в localStorage
+            // Zustand persist сохраняет асинхронно, поэтому даем время
+            await new Promise(resolve => setTimeout(resolve, 500));
+            
+            // Используем router.push для навигации
+            // Состояние должно быть сохранено в localStorage к этому моменту
+            router.push('/products');
+            return;
+          }
+          attempts++;
+        }
+        
+        if (!productFound) {
+          console.error('Product was not added after multiple attempts');
+          alert('Ошибка: продукт не был добавлен. Попробуйте еще раз.');
+        }
+      } catch (error) {
+        console.error('Error adding product:', error);
+        alert('Произошла ошибка при создании продукта. Попробуйте еще раз.');
       }
     }
   };

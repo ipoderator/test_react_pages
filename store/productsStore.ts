@@ -42,15 +42,20 @@ export const useProductsStore = create<ProductsState>()(
       hasLoadedFromAPI: false,
       setProducts: (products) => {
         set((state) => {
-          // Если это первый раз загрузка из API и еще нет продуктов, просто устанавливаем
-          if (!state.hasLoadedFromAPI && state.products.length === 0) {
-            return { products, hasLoadedFromAPI: true };
+          // Если уже есть продукты в store (созданные пользователем или загруженные ранее),
+          // ВСЕГДА объединяем с ними, никогда не заменяем
+          if (state.products.length > 0) {
+            const existingIds = new Set(state.products.map(p => p.id));
+            const newProducts = products.filter(p => !existingIds.has(p.id));
+            return { 
+              products: [...state.products, ...newProducts],
+              hasLoadedFromAPI: true 
+            };
           }
-          // Иначе всегда объединяем с существующими продуктами (сохраняем созданные пользователем)
-          const existingIds = new Set(state.products.map(p => p.id));
-          const newProducts = products.filter(p => !existingIds.has(p.id));
+          
+          // Только если продуктов нет вообще (первая загрузка), устанавливаем продукты из API
           return { 
-            products: [...state.products, ...newProducts],
+            products,
             hasLoadedFromAPI: true 
           };
         });
