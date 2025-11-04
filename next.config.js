@@ -1,7 +1,11 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  output: 'export', // Включает статический экспорт для GitHub Pages
+  basePath: '/test_react', // Путь к репозиторию на GitHub Pages
+  assetPrefix: '/test_react', // Префикс для статических ресурсов
   images: {
+    unoptimized: true, // Обязательно для статического экспорта
     remotePatterns: [
       {
         protocol: 'https',
