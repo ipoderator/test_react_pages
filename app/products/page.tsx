@@ -31,8 +31,9 @@ export default function ProductsPage() {
   // Логирование для отладки
   useEffect(() => {
     console.log('ProductsPage rendered, products count:', products.length);
+    console.log('Filters:', { filter, searchQuery, categoryFilter, priceRange, currentPage });
     console.log('Products:', products);
-  }, [products]);
+  }, [products, filter, searchQuery, categoryFilter, priceRange, currentPage]);
 
   useEffect(() => {
     const loadProducts = async () => {
@@ -89,10 +90,12 @@ export default function ProductsPage() {
 
   const filteredProducts = useMemo(() => {
     let result = products;
+    console.log('Filtering products, total:', result.length);
 
     // Фильтр по избранному
     if (filter === 'favorites') {
       result = result.filter((product) => favorites.includes(product.id));
+      console.log('After favorites filter:', result.length);
     }
 
     // Поиск
@@ -103,17 +106,21 @@ export default function ProductsPage() {
           product.title.toLowerCase().includes(query) ||
           product.description.toLowerCase().includes(query)
       );
+      console.log('After search filter:', result.length);
     }
 
     // Фильтр по категории
     if (categoryFilter) {
       result = result.filter((product) => product.category === categoryFilter);
+      console.log('After category filter:', result.length);
     }
 
     // Фильтр по цене
     result = result.filter(
       (product) => product.price >= priceRange.min && product.price <= priceRange.max
     );
+    console.log('After price filter:', result.length);
+    console.log('Filtered products count:', result.length);
 
     return result;
   }, [products, filter, favorites, searchQuery, categoryFilter, priceRange]);
