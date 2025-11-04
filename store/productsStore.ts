@@ -111,9 +111,9 @@ export const useProductsStore = create<ProductsState>()(
         hasLoadedFromAPI: state.hasLoadedFromAPI,
       }),
       skipHydration: false,
-      onRehydrateStorage: () => (state) => {
+      onRehydrateStorage: () => (state: ProductsState | undefined) => {
         console.log('hydration starts');
-        return (state, error) => {
+        return (state: ProductsState | undefined, error?: unknown) => {
           if (error) {
             console.log('an error happened during hydration', error);
           } else {
