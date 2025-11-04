@@ -56,14 +56,17 @@ export default function EditProductClient({ id }: EditProductClientProps) {
         } else {
           // Если нет в store, загружаем из API
           const fetchedProduct = await fetchProductById(productId);
-          setProduct(fetchedProduct);
-          setFormData({
-            title: fetchedProduct.title,
-            price: fetchedProduct.price.toString(),
-            description: fetchedProduct.description,
-            category: fetchedProduct.category,
-            image: fetchedProduct.image,
-          });
+          if (fetchedProduct) {
+            setProduct(fetchedProduct);
+            setFormData({
+              title: fetchedProduct.title,
+              price: fetchedProduct.price.toString(),
+              description: fetchedProduct.description,
+              category: fetchedProduct.category,
+              image: fetchedProduct.image,
+            });
+          }
+          // Если null, product останется null и покажется сообщение "Товар не найден"
         }
       } catch (error) {
         console.error('Ошибка загрузки товара:', error);

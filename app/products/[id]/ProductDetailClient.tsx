@@ -34,7 +34,10 @@ export default function ProductDetailClient({ id }: ProductDetailClientProps) {
         } else {
           // Если нет в store, загружаем из API
           const fetchedProduct = await fetchProductById(productId);
-          setProduct(fetchedProduct);
+          if (fetchedProduct) {
+            setProduct(fetchedProduct);
+          }
+          // Если null, product останется null и покажется сообщение "Товар не найден"
         }
       } catch (error) {
         console.error('Ошибка загрузки товара:', error);

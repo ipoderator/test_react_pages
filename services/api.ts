@@ -3,23 +3,57 @@ import { Product } from '@/types';
 
 const API_URL = 'https://fakestoreapi.com/products';
 
-export const fetchProducts = async (): Promise<Product[]> => {
+// Retry function for API calls
+const retryRequest = async <T>(
+  fn: () => Promise<T>,
+  retries = 3,
+  delay = 1000
+): Promise<T> => {
   try {
-    const response = await axios.get<Product[]>(API_URL);
-    return response.data;
+    return await fn();
   } catch (error) {
-    console.error('Ошибка загрузки продуктов:', error);
+    if (retries > 0) {
+      await new Promise((resolve) => setTimeout(resolve, delay));
+      return retryRequest(fn, retries - 1, delay * 2);
+    }
     throw error;
   }
 };
 
-export const fetchProductById = async (id: number): Promise<Product> => {
+export const fetchProducts = async (): Promise<Product[]> => {
   try {
-    const response = await axios.get<Product>(`${API_URL}/${id}`);
+    const response = await retryRequest(() => 
+      axios.get<Product[]>(API_URL, {
+        timeout: 10000, // 10 second timeout
+        headers: {
+          'Accept': 'application/json',
+        }
+      })
+    );
+    return response.data;
+  } catch (error) {
+    console.error('Ошибка загрузки продуктов:', error);
+    // Return empty array instead of throwing to prevent app crash
+    // The app will show empty state which is better than crashing
+    return [];
+  }
+};
+
+export const fetchProductById = async (id: number): Promise<Product | null> => {
+  try {
+    const response = await retryRequest(() =>
+      axios.get<Product>(`${API_URL}/${id}`, {
+        timeout: 10000,
+        headers: {
+          'Accept': 'application/json',
+        }
+      })
+    );
     return response.data;
   } catch (error) {
     console.error('Ошибка загрузки товара:', error);
-    throw error;
+    // Return null instead of throwing
+    return null;
   }
 };
 

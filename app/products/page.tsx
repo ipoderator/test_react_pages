@@ -33,7 +33,11 @@ export default function ProductsPage() {
       setLoading(true);
       try {
         const fetchedProducts = await fetchProducts();
-        setProducts(fetchedProducts);
+        // fetchProducts теперь возвращает пустой массив при ошибке, а не выбрасывает исключение
+        if (fetchedProducts.length > 0) {
+          setProducts(fetchedProducts);
+        }
+        // Если пустой массив - это значит API недоступен, но приложение продолжит работать
       } catch (error) {
         console.error('Ошибка загрузки продуктов:', error);
       } finally {
@@ -197,7 +201,16 @@ export default function ProductsPage() {
 
         {filteredProducts.length === 0 ? (
           <div className="text-center py-12">
-            <p className="text-gray-500 text-lg">Продукты не найдены</p>
+            <p className="text-gray-500 text-lg mb-2">
+              {products.length === 0 && !isLoading
+                ? 'Продукты не найдены. API может быть временно недоступен.'
+                : 'Продукты не найдены'}
+            </p>
+            {products.length === 0 && !isLoading && (
+              <p className="text-gray-400 text-sm">
+                Попробуйте создать продукт или обновить страницу позже.
+              </p>
+            )}
           </div>
         ) : (
           <>
