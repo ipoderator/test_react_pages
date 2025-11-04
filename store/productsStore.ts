@@ -57,16 +57,31 @@ export const useProductsStore = create<ProductsState>()(
       },
       addProduct: (productData) => {
         const state = get();
+        console.log('addProduct called with:', productData);
+        console.log('Current products count:', state.products.length);
         const newId = state.getNextId();
+        console.log('Generated new ID:', newId);
         const newProduct: Product = {
           ...productData,
           id: newId,
           rating: { rate: 0, count: 0 },
         };
-        set((currentState) => ({
-          products: [newProduct, ...currentState.products],
-          currentPage: 1, // Сбрасываем на первую страницу, чтобы новый товар был виден
-        }));
+        console.log('New product:', newProduct);
+        set((currentState) => {
+          const updatedProducts = [newProduct, ...currentState.products];
+          console.log('Updated products count:', updatedProducts.length);
+          console.log('First product in list:', updatedProducts[0]);
+          return {
+            products: updatedProducts,
+            currentPage: 1, // Сбрасываем на первую страницу, чтобы новый товар был виден
+          };
+        });
+        // Проверяем, что состояние обновилось
+        setTimeout(() => {
+          const finalState = get();
+          console.log('Final products count after addProduct:', finalState.products.length);
+          console.log('First product:', finalState.products[0]);
+        }, 100);
       },
       updateProduct: (id, productData) =>
         set((state) => ({

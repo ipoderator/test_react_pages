@@ -77,13 +77,20 @@ export default function CreateProductPage() {
         image: formData.image.trim(),
       };
       const previousCount = products.length;
+      console.log('Submitting form, products before:', previousCount);
       addProduct(productData);
       // Увеличиваем задержку для гарантированного сохранения состояния перед редиректом
-      await new Promise(resolve => setTimeout(resolve, 300));
+      await new Promise(resolve => setTimeout(resolve, 500));
       // Проверяем, что продукт был добавлен
       const currentCount = useProductsStore.getState().products.length;
       console.log('Products before:', previousCount, 'Products after:', currentCount);
-      router.push('/products');
+      if (currentCount > previousCount) {
+        console.log('Product successfully added, redirecting...');
+        router.replace('/products');
+      } else {
+        console.error('Product was not added!');
+        alert('Ошибка: продукт не был добавлен. Проверьте консоль браузера.');
+      }
     }
   };
 

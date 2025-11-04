@@ -28,6 +28,12 @@ export default function ProductsPage() {
     setCurrentPage,
   } = useProductsStore();
 
+  // Логирование для отладки
+  useEffect(() => {
+    console.log('ProductsPage rendered, products count:', products.length);
+    console.log('Products:', products);
+  }, [products]);
+
   useEffect(() => {
     const loadProducts = async () => {
       setLoading(true);
