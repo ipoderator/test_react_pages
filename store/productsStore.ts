@@ -52,7 +52,6 @@ export const useProductsStore = create<ProductsState>((set, get) => ({
       };
     });
   },
-  setHasLoadedFromAPI: (loaded) => set({ hasLoadedFromAPI: loaded }),
   addProduct: (productData) => {
     const newId = get().getNextId();
     const newProduct: Product = {
