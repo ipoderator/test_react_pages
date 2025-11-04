@@ -69,6 +69,7 @@ export default function CreateProductPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (validateForm()) {
+      // Сохраняем данные как есть, без дополнительной обработки для поддержки Unicode
       const productData = {
         title: formData.title.trim(),
         price: parseFloat(formData.price),
@@ -76,6 +77,9 @@ export default function CreateProductPage() {
         category: formData.category.trim(),
         image: formData.image.trim(),
       };
+      
+      // Логируем данные для отладки
+      console.log('Product data (UTF-8):', JSON.stringify(productData, null, 2));
       
       try {
         console.log('Form submitted, adding product...');
@@ -159,6 +163,7 @@ export default function CreateProductPage() {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
+    // Сохраняем значение как есть, без дополнительной обработки для поддержки Unicode
     setFormData((prev) => ({ ...prev, [name]: value }));
     if (errors[name as keyof FormErrors]) {
       setErrors((prev) => ({ ...prev, [name]: undefined }));
@@ -204,6 +209,8 @@ export default function CreateProductPage() {
                     : 'border-gray-300 focus:ring-blue-500'
                 }`}
                 placeholder="Введите название продукта"
+                autoComplete="off"
+                lang="ru"
               />
               {errors.title && <p className="mt-1 text-sm text-red-500">{errors.title}</p>}
             </div>
@@ -246,6 +253,8 @@ export default function CreateProductPage() {
                     : 'border-gray-300 focus:ring-blue-500'
                 }`}
                 placeholder="Введите категорию продукта"
+                autoComplete="off"
+                lang="ru"
               />
               {errors.category && <p className="mt-1 text-sm text-red-500">{errors.category}</p>}
             </div>
@@ -266,6 +275,8 @@ export default function CreateProductPage() {
                     : 'border-gray-300 focus:ring-blue-500'
                 }`}
                 placeholder="Введите описание продукта"
+                autoComplete="off"
+                lang="ru"
               />
               {errors.description && (
                 <p className="mt-1 text-sm text-red-500">{errors.description}</p>
