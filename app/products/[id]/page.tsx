@@ -1,10 +1,21 @@
 import ProductDetailClient from './ProductDetailClient';
 
-// Allow dynamic routes for user-created products (ID >= 1000)
-// This allows Next.js to handle any product ID, not just those from API
-export const dynamic = 'force-dynamic';
-export const dynamicParams = true;
+// For static export, generateStaticParams is required
+// Return static IDs to create route structure
+// Client-side ProductDetailClient will handle all product IDs (including user-created >= 1000)
+export async function generateStaticParams() {
+  // Return static array of common product IDs to create route structure
+  // ProductDetailClient handles loading any product ID on the client side
+  return [
+    { id: '1' },
+    { id: '2' },
+    { id: '3' },
+    { id: '4' },
+    { id: '5' },
+  ];
+}
 
+// Server component wrapper - required for static export
 export default async function ProductDetailPage({ 
   params 
 }: { 
