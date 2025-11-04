@@ -232,13 +232,12 @@ export default function CreateProductPage() {
 
             <div>
               <label htmlFor="category" className="block text-sm font-medium text-gray-700 mb-2">
-                Категория * (можно выбрать из списка или ввести свою)
+                Категория *
               </label>
               <input
                 type="text"
                 id="category"
                 name="category"
-                list="category-options"
                 value={formData.category}
                 onChange={handleChange}
                 className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 ${
@@ -246,18 +245,8 @@ export default function CreateProductPage() {
                     ? 'border-red-500 focus:ring-red-500'
                     : 'border-gray-300 focus:ring-blue-500'
                 }`}
-                placeholder="Введите или выберите категорию"
+                placeholder="Введите категорию продукта"
               />
-              <datalist id="category-options">
-                <option value="electronics">Электроника / Electronics</option>
-                <option value="jewelery">Ювелирные изделия / Jewelry</option>
-                <option value="men's clothing">Мужская одежда / Men's Clothing</option>
-                <option value="women's clothing">Женская одежда / Women's Clothing</option>
-                <option value="Электроника">Электроника</option>
-                <option value="Ювелирные изделия">Ювелирные изделия</option>
-                <option value="Мужская одежда">Мужская одежда</option>
-                <option value="Женская одежда">Женская одежда</option>
-              </datalist>
               {errors.category && <p className="mt-1 text-sm text-red-500">{errors.category}</p>}
             </div>
 
