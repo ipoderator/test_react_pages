@@ -146,13 +146,8 @@ export default function CreateProductPage() {
       
       // Используем router.push для навигации с учетом basePath
       // Next.js автоматически добавит basePath к пути
-      // После навигации принудительно перезагружаем страницу для загрузки данных из localStorage
+      // Zustand persist автоматически загрузит данные из localStorage при навигации
       router.push('/products');
-      
-      // Небольшая задержка перед перезагрузкой, чтобы router успел выполнить навигацию
-      setTimeout(() => {
-        window.location.reload();
-      }, 200);
     } catch (error) {
       console.error('Error adding product:', error);
       alert('Произошла ошибка при создании продукта. Попробуйте еще раз.');
