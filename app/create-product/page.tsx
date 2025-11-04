@@ -69,13 +69,14 @@ export default function CreateProductPage() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (validateForm()) {
-      addProduct({
+      const productData = {
         title: formData.title.trim(),
         price: parseFloat(formData.price),
         description: formData.description.trim(),
         category: formData.category.trim(),
         image: formData.image.trim(),
-      });
+      };
+      addProduct(productData);
       router.push('/products');
     }
   };
@@ -110,7 +111,7 @@ export default function CreateProductPage() {
 
         <div className="bg-white rounded-lg shadow-lg p-8">
           <h1 className="text-3xl font-bold mb-6">Создать продукт</h1>
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-6" acceptCharset="UTF-8">
             <div>
               <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-2">
                 Название *
