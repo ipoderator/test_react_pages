@@ -1,7 +1,9 @@
 import axios from 'axios';
 import { Product } from '@/types';
 
-const API_URL = 'https://fakestoreapi.com/products';
+// Use environment variable with fallback to default Fake Store API
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://fakestoreapi.com';
+const API_URL = `${API_BASE_URL}/products`;
 
 // Retry function for API calls
 const retryRequest = async <T>(
@@ -57,3 +59,5 @@ export const fetchProductById = async (id: number): Promise<Product | null> => {
   }
 };
 
+// Export API base URL for use in generateStaticParams
+export const getApiBaseUrl = () => API_BASE_URL;
