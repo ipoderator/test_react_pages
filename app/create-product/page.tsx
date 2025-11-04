@@ -66,7 +66,7 @@ export default function CreateProductPage() {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (validateForm()) {
       const productData = {
@@ -77,6 +77,8 @@ export default function CreateProductPage() {
         image: formData.image.trim(),
       };
       addProduct(productData);
+      // Небольшая задержка для сохранения состояния перед редиректом
+      await new Promise(resolve => setTimeout(resolve, 100));
       router.push('/products');
     }
   };

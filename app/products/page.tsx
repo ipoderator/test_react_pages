@@ -45,12 +45,12 @@ export default function ProductsPage() {
       }
     };
 
-    // Загружаем продукты из API только если их еще нет
-    // Но не перезагружаем если уже есть продукты (могут быть созданные пользователем)
-    if (products.length === 0 && !hasLoadedFromAPI) {
+    // Загружаем продукты из API только если они еще не загружались
+    // Это позволит сохранить созданные пользователем продукты
+    if (!hasLoadedFromAPI) {
       loadProducts();
     }
-  }, [products.length, hasLoadedFromAPI, setProducts, setLoading]);
+  }, [hasLoadedFromAPI, setProducts, setLoading]);
 
   const filteredProducts = useMemo(() => {
     let result = products;
