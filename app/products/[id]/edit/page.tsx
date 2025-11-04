@@ -4,15 +4,13 @@ import EditProductClient from './EditProductClient';
 // Return static IDs to create route structure
 // Client-side EditProductClient will handle all product IDs (including user-created >= 1000)
 export async function generateStaticParams() {
-  // Return static array of common product IDs to create route structure
-  // EditProductClient handles loading any product ID on the client side
-  return [
-    { id: '1' },
-    { id: '2' },
-    { id: '3' },
-    { id: '4' },
-    { id: '5' },
-  ];
+  // Генерируем статические параметры для:
+  // 1. API продуктов (1-20)
+  // 2. Пользовательских продуктов (1000-10000) - широкий диапазон для новых товаров
+  const apiProductIds = Array.from({ length: 20 }, (_, i) => ({ id: String(i + 1) }));
+  const userProductIds = Array.from({ length: 9000 }, (_, i) => ({ id: String(i + 1000) }));
+  
+  return [...apiProductIds, ...userProductIds];
 }
 
 // Server component wrapper - required for static export
