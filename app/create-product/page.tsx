@@ -144,10 +144,15 @@ export default function CreateProductPage() {
         await new Promise(resolve => setTimeout(resolve, 300));
       }
       
-      // Используем window.location для полной перезагрузки страницы
-      // Это гарантирует, что компонент получит обновленное состояние из localStorage
-      // При полной перезагрузке страницы Zustand загрузит данные из localStorage
-      window.location.href = '/products';
+      // Используем router.push для навигации с учетом basePath
+      // Next.js автоматически добавит basePath к пути
+      // После навигации принудительно перезагружаем страницу для загрузки данных из localStorage
+      router.push('/products');
+      
+      // Небольшая задержка перед перезагрузкой, чтобы router успел выполнить навигацию
+      setTimeout(() => {
+        window.location.reload();
+      }, 200);
     } catch (error) {
       console.error('Error adding product:', error);
       alert('Произошла ошибка при создании продукта. Попробуйте еще раз.');
