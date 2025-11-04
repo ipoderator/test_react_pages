@@ -85,13 +85,68 @@ export default function CreateProductPage() {
       };
       
       try {
+        console.log('Creating product:', productData);
+        
         // Добавляем продукт
         addProduct(productData);
         
-        // Небольшая задержка для сохранения в localStorage
-        await new Promise(resolve => setTimeout(resolve, 100));
+        // Даем время для первоначального сохранения
+        await new Promise(resolve => setTimeout(resolve, 200));
         
-        // Редирект на страницу продуктов
+        // Ждем, пока Zustand сохранит в localStorage
+        // Проверяем несколько раз, что продукт был добавлен и сохранен
+        let attempts = 0;
+        const maxAttempts = 30;
+        let productSaved = false;
+        
+        while (attempts < maxAttempts && !productSaved) {
+          await new Promise(resolve => setTimeout(resolve, 100));
+          
+          // Проверяем, что продукт есть в store
+          const currentState = useProductsStore.getState();
+          const productExists = currentState.products.some(
+            p => p.title === productData.title && 
+                 Math.abs(p.price - productData.price) < 0.01 &&
+                 p.description === productData.description &&
+                 p.category === productData.category
+          );
+          
+          if (productExists) {
+            // Проверяем, что продукт сохранен в localStorage
+            try {
+              const stored = localStorage.getItem('products-storage');
+              if (stored) {
+                const parsed = JSON.parse(stored);
+                if (parsed.state && parsed.state.products) {
+                  const hasProduct = parsed.state.products.some(
+                    (p: any) => p.title === productData.title &&
+                                Math.abs(p.price - productData.price) < 0.01 &&
+                                p.description === productData.description &&
+                                p.category === productData.category
+                  );
+                  if (hasProduct) {
+                    console.log('Product saved successfully in localStorage');
+                    productSaved = true;
+                    break;
+                  }
+                }
+              }
+            } catch (err) {
+              console.error('Error checking localStorage:', err);
+            }
+          }
+          
+          attempts++;
+        }
+        
+        if (productSaved) {
+          console.log('Product created successfully, redirecting...');
+        } else {
+          console.warn('Product may not have been saved, but redirecting anyway...');
+          // Даем дополнительное время для сохранения
+          await new Promise(resolve => setTimeout(resolve, 500));
+        }
+        
         router.push('/products');
       } catch (error) {
         console.error('Error adding product:', error);
