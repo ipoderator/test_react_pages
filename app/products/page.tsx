@@ -19,6 +19,7 @@ export default function ProductsPage() {
     currentPage,
     itemsPerPage,
     hasLoadedFromAPI,
+    _hasHydrated,
     setProducts,
     setLoading,
     isLoading,
@@ -31,12 +32,38 @@ export default function ProductsPage() {
   // Логирование для отладки
   useEffect(() => {
     console.log('ProductsPage rendered, products count:', products.length);
+    console.log('Hydrated:', _hasHydrated);
     console.log('Filters:', { filter, searchQuery, categoryFilter, priceRange, currentPage });
     console.log('Products:', products);
-  }, [products, filter, searchQuery, categoryFilter, priceRange, currentPage]);
+  }, [products, filter, searchQuery, categoryFilter, priceRange, currentPage, _hasHydrated]);
+
+  // Устанавливаем флаг гидратации при монтировании компонента
+  useEffect(() => {
+    // Если гидратация еще не завершена, устанавливаем флаг после небольшой задержки
+    // Это гарантирует, что компонент не будет ждать бесконечно
+    if (!_hasHydrated) {
+      const timeout = setTimeout(() => {
+        const state = useProductsStore.getState();
+        if (!state._hasHydrated) {
+          console.log('Setting hydration flag manually after timeout');
+          state.setHasHydrated(true);
+        }
+      }, 500);
+      
+      return () => clearTimeout(timeout);
+    }
+  }, [_hasHydrated]);
 
   useEffect(() => {
     const loadProducts = async () => {
+      // Ждем завершения гидратации перед загрузкой продуктов
+      let attempts = 0;
+      while (!useProductsStore.getState()._hasHydrated && attempts < 20) {
+        console.log('Waiting for hydration to complete...', attempts);
+        await new Promise(resolve => setTimeout(resolve, 100));
+        attempts++;
+      }
+      
       // Увеличиваем задержку для гарантированного завершения гидратации Zustand
       // Это критически важно, чтобы не перезаписать созданные пользователем продукты
       await new Promise(resolve => setTimeout(resolve, 300));
@@ -45,6 +72,7 @@ export default function ProductsPage() {
       const currentState = useProductsStore.getState();
       console.log('loadProducts: hasLoadedFromAPI =', currentState.hasLoadedFromAPI);
       console.log('loadProducts: products count =', currentState.products.length);
+      console.log('loadProducts: hydrated =', currentState._hasHydrated);
       
       // Если уже есть продукты в store (из localStorage или созданные пользователем),
       // и они были загружены из API ранее, не загружаем снова
@@ -80,13 +108,13 @@ export default function ProductsPage() {
 
     // Загружаем продукты из API только если они еще не загружались
     // Это позволит сохранить созданные пользователем продукты
-    if (!hasLoadedFromAPI) {
+    if (!hasLoadedFromAPI && _hasHydrated) {
       loadProducts();
     } else {
       // Если уже загружено из API, просто убеждаемся, что loading = false
       setLoading(false);
     }
-  }, [hasLoadedFromAPI, setProducts, setLoading]);
+  }, [hasLoadedFromAPI, _hasHydrated, setProducts, setLoading]);
 
   const filteredProducts = useMemo(() => {
     let result = products;
@@ -149,7 +177,8 @@ export default function ProductsPage() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  if (isLoading) {
+  // Показываем загрузку пока не завершена гидратация или идет загрузка данных
+  if (isLoading || !_hasHydrated) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-xl">Загрузка...</div>

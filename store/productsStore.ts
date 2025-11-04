@@ -13,6 +13,7 @@ interface ProductsState {
   currentPage: number;
   itemsPerPage: number;
   hasLoadedFromAPI: boolean;
+  _hasHydrated: boolean;
   setProducts: (products: Product[]) => void;
   addProduct: (product: Omit<Product, 'id' | 'rating'>) => void;
   updateProduct: (id: number, product: Partial<Product>) => void;
@@ -24,6 +25,7 @@ interface ProductsState {
   setCategoryFilter: (category: string) => void;
   setPriceRange: (range: { min: number; max: number }) => void;
   setCurrentPage: (page: number) => void;
+  setHasHydrated: (hasHydrated: boolean) => void;
   getNextId: () => number;
 }
 
@@ -40,6 +42,7 @@ export const useProductsStore = create<ProductsState>()(
       currentPage: 1,
       itemsPerPage: 12,
       hasLoadedFromAPI: false,
+      _hasHydrated: false,
       setProducts: (products) => {
         set((state) => {
           console.log('setProducts called, current products count:', state.products.length);
@@ -149,6 +152,7 @@ export const useProductsStore = create<ProductsState>()(
       setCategoryFilter: (categoryFilter) => set({ categoryFilter, currentPage: 1 }),
       setPriceRange: (priceRange) => set({ priceRange, currentPage: 1 }),
       setCurrentPage: (currentPage) => set({ currentPage }),
+      setHasHydrated: (hasHydrated) => set({ _hasHydrated: hasHydrated }),
       getNextId: () => {
         const state = get();
         // Всегда начинаем с ID >= 1000 для созданных пользователем продуктов
@@ -176,13 +180,20 @@ export const useProductsStore = create<ProductsState>()(
         hasLoadedFromAPI: state.hasLoadedFromAPI,
       }),
       skipHydration: false,
-      onRehydrateStorage: () => (state: ProductsState | undefined) => {
+      onRehydrateStorage: () => {
         console.log('hydration starts');
         return (state: ProductsState | undefined, error?: unknown) => {
           if (error) {
             console.log('an error happened during hydration', error);
+            // Устанавливаем флаг даже при ошибке, чтобы компонент не ждал бесконечно
+            useProductsStore.getState().setHasHydrated(true);
           } else {
             console.log('hydration finished', state);
+            // Устанавливаем флаг завершения гидратации
+            useProductsStore.getState().setHasHydrated(true);
+            if (state) {
+              console.log('Hydration completed, products count:', state.products.length);
+            }
           }
         };
       },
