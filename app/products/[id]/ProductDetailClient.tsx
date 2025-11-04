@@ -31,16 +31,32 @@ export default function ProductDetailClient({ id }: ProductDetailClientProps) {
         const productInStore = products.find((p) => p.id === productId);
         if (productInStore) {
           setProduct(productInStore);
+          setIsLoading(false);
+          return;
+        }
+        
+        // Если продукт не найден в store, проверяем, является ли это созданным пользователем продуктом
+        // Созданные пользователем продукты имеют ID >= 1000 и не существуют в API
+        if (productId >= 1000) {
+          // Это созданный пользователем продукт, но он не найден в store
+          // Возможно, он был удален или не загружен из localStorage
+          console.warn('Created product not found in store:', productId);
+          setProduct(null);
+          setIsLoading(false);
+          return;
+        }
+        
+        // Для продуктов с ID < 1000 (из API) пытаемся загрузить из API
+        const fetchedProduct = await fetchProductById(productId);
+        if (fetchedProduct) {
+          setProduct(fetchedProduct);
         } else {
-          // Если нет в store, загружаем из API
-          const fetchedProduct = await fetchProductById(productId);
-          if (fetchedProduct) {
-            setProduct(fetchedProduct);
-          }
           // Если null, product останется null и покажется сообщение "Товар не найден"
+          setProduct(null);
         }
       } catch (error) {
         console.error('Ошибка загрузки товара:', error);
+        setProduct(null);
       } finally {
         setIsLoading(false);
       }

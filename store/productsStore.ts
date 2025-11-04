@@ -147,14 +147,21 @@ export const useProductsStore = create<ProductsState>()(
       setCurrentPage: (currentPage) => set({ currentPage }),
       getNextId: () => {
         const state = get();
+        // Всегда начинаем с ID >= 1000 для созданных пользователем продуктов
+        // Это гарантирует отсутствие конфликтов с API продуктами (1-20)
         if (state.products.length === 0) {
-          return 1000; // Начинаем с большого числа, чтобы избежать конфликтов с API продуктами
+          return 1000;
         }
+        
+        // Находим максимальный ID среди всех продуктов
         const maxId = Math.max(
           ...state.products.map((p) => p.id),
-          0
+          999 // Минимальное значение для пользовательских продуктов
         );
-        return maxId + 1;
+        
+        // Если максимальный ID меньше 1000, начинаем с 1000
+        // Иначе инкрементируем на 1
+        return maxId >= 1000 ? maxId + 1 : 1000;
       },
     }),
     {

@@ -12,6 +12,17 @@ interface FormErrors {
   image?: string;
 }
 
+const CATEGORIES = [
+  'electronics',
+  'jewelery',
+  "men's clothing",
+  "women's clothing",
+  'Электроника',
+  'Ювелирные изделия',
+  'Мужская одежда',
+  'Женская одежда',
+];
+
 export default function CreateProductPage() {
   const router = useRouter();
   const { addProduct, products } = useProductsStore();
@@ -23,6 +34,7 @@ export default function CreateProductPage() {
     image: '',
   });
   const [errors, setErrors] = useState<FormErrors>({});
+  const [showCustomCategory, setShowCustomCategory] = useState(false);
 
   const validateForm = (): boolean => {
     const newErrors: FormErrors = {};
@@ -161,12 +173,31 @@ export default function CreateProductPage() {
     }
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     // Сохраняем значение как есть, без дополнительной обработки для поддержки Unicode
     setFormData((prev) => ({ ...prev, [name]: value }));
     if (errors[name as keyof FormErrors]) {
       setErrors((prev) => ({ ...prev, [name]: undefined }));
+    }
+    
+    // Если выбрана категория из списка, скрываем поле для ввода своей категории
+    if (name === 'category' && value && CATEGORIES.includes(value)) {
+      setShowCustomCategory(false);
+    }
+  };
+  
+  const handleCategorySelect = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const value = e.target.value;
+    if (value === 'custom') {
+      setShowCustomCategory(true);
+      setFormData((prev) => ({ ...prev, category: '' }));
+    } else {
+      setShowCustomCategory(false);
+      setFormData((prev) => ({ ...prev, category: value }));
+    }
+    if (errors.category) {
+      setErrors((prev) => ({ ...prev, category: undefined }));
     }
   };
 
@@ -241,22 +272,58 @@ export default function CreateProductPage() {
               <label htmlFor="category" className="block text-sm font-medium text-gray-700 mb-2">
                 Категория *
               </label>
-              <input
-                type="text"
-                id="category"
-                name="category"
-                value={formData.category}
-                onChange={handleChange}
-                className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 ${
-                  errors.category
-                    ? 'border-red-500 focus:ring-red-500'
-                    : 'border-gray-300 focus:ring-blue-500'
-                }`}
-                placeholder="Введите категорию продукта"
-                autoComplete="off"
-                lang="ru"
-              />
-              {errors.category && <p className="mt-1 text-sm text-red-500">{errors.category}</p>}
+              {!showCustomCategory ? (
+                <>
+                  <select
+                    id="category-select"
+                    value={formData.category || ''}
+                    onChange={handleCategorySelect}
+                    className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 ${
+                      errors.category
+                        ? 'border-red-500 focus:ring-red-500'
+                        : 'border-gray-300 focus:ring-blue-500'
+                    }`}
+                  >
+                    <option value="">Выберите категорию</option>
+                    {CATEGORIES.map((cat) => (
+                      <option key={cat} value={cat}>
+                        {cat}
+                      </option>
+                    ))}
+                    <option value="custom">Ввести свою категорию</option>
+                  </select>
+                  {errors.category && <p className="mt-1 text-sm text-red-500">{errors.category}</p>}
+                </>
+              ) : (
+                <div>
+                  <input
+                    type="text"
+                    id="category"
+                    name="category"
+                    value={formData.category}
+                    onChange={handleChange}
+                    className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 ${
+                      errors.category
+                        ? 'border-red-500 focus:ring-red-500'
+                        : 'border-gray-300 focus:ring-blue-500'
+                    }`}
+                    placeholder="Введите свою категорию"
+                    autoComplete="off"
+                    lang="ru"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowCustomCategory(false);
+                      setFormData((prev) => ({ ...prev, category: '' }));
+                    }}
+                    className="mt-2 text-sm text-blue-600 hover:text-blue-800"
+                  >
+                    Выбрать из списка
+                  </button>
+                  {errors.category && <p className="mt-1 text-sm text-red-500">{errors.category}</p>}
+                </div>
+              )}
             </div>
 
             <div>
