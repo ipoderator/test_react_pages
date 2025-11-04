@@ -78,17 +78,18 @@ export default function CreateProductPage() {
       };
       
       try {
+        console.log('Form submitted, adding product...');
         // Добавляем продукт
         addProduct(productData);
         
         // Ждем, чтобы Zustand успел сохранить в localStorage
         // Проверяем несколько раз, что продукт был добавлен
         let attempts = 0;
-        const maxAttempts = 20;
+        const maxAttempts = 30;
         let productFound = false;
         
         while (attempts < maxAttempts && !productFound) {
-          await new Promise(resolve => setTimeout(resolve, 50));
+          await new Promise(resolve => setTimeout(resolve, 100));
           const currentState = useProductsStore.getState();
           productFound = currentState.products.some(
             p => p.title === productData.title && 
@@ -98,21 +99,56 @@ export default function CreateProductPage() {
           );
           
           if (productFound) {
-            // Дополнительная задержка для гарантии сохранения в localStorage
-            // Zustand persist сохраняет асинхронно, поэтому даем время
-            await new Promise(resolve => setTimeout(resolve, 500));
+            console.log('Product found in store, verifying localStorage...');
             
-            // Используем router.push для навигации
-            // Состояние должно быть сохранено в localStorage к этому моменту
-            router.push('/products');
-            return;
+            // Проверяем, что продукт действительно сохранен в localStorage
+            // Zustand persist сохраняет в localStorage с ключом 'products-storage'
+            let localStorageVerified = false;
+            let verifyAttempts = 0;
+            while (verifyAttempts < 10 && !localStorageVerified) {
+              await new Promise(resolve => setTimeout(resolve, 100));
+              try {
+                const stored = localStorage.getItem('products-storage');
+                if (stored) {
+                  const parsed = JSON.parse(stored);
+                  if (parsed.state && parsed.state.products) {
+                    const hasProduct = parsed.state.products.some(
+                      (p: any) => p.title === productData.title &&
+                                  Math.abs(p.price - productData.price) < 0.01 &&
+                                  p.description === productData.description &&
+                                  p.category === productData.category
+                    );
+                    if (hasProduct) {
+                      localStorageVerified = true;
+                      console.log('Product verified in localStorage');
+                    }
+                  }
+                }
+              } catch (err) {
+                console.error('Error checking localStorage:', err);
+              }
+              verifyAttempts++;
+            }
+            
+            if (localStorageVerified) {
+              console.log('Product successfully saved, redirecting...');
+              // Используем router.push для навигации
+              router.push('/products');
+              return;
+            } else {
+              console.warn('Product not found in localStorage, but found in store. Redirecting anyway...');
+              // Все равно редиректим, так как продукт есть в store
+              await new Promise(resolve => setTimeout(resolve, 200));
+              router.push('/products');
+              return;
+            }
           }
           attempts++;
         }
         
         if (!productFound) {
           console.error('Product was not added after multiple attempts');
-          alert('Ошибка: продукт не был добавлен. Попробуйте еще раз.');
+          alert('Ошибка: продукт не был добавлен. Проверьте консоль браузера для подробностей.');
         }
       } catch (error) {
         console.error('Error adding product:', error);

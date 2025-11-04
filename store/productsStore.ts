@@ -42,18 +42,48 @@ export const useProductsStore = create<ProductsState>()(
       hasLoadedFromAPI: false,
       setProducts: (products) => {
         set((state) => {
+          console.log('setProducts called, current products count:', state.products.length);
+          console.log('API products count:', products.length);
+          
           // Если уже есть продукты в store (созданные пользователем или загруженные ранее),
           // ВСЕГДА объединяем с ними, никогда не заменяем
           if (state.products.length > 0) {
             const existingIds = new Set(state.products.map(p => p.id));
             const newProducts = products.filter(p => !existingIds.has(p.id));
+            const mergedProducts = [...state.products, ...newProducts];
+            console.log('Merging products, total after merge:', mergedProducts.length);
             return { 
-              products: [...state.products, ...newProducts],
+              products: mergedProducts,
               hasLoadedFromAPI: true 
             };
           }
           
-          // Только если продуктов нет вообще (первая загрузка), устанавливаем продукты из API
+          // Если продуктов нет в store, проверяем localStorage на случай,
+          // если гидратация еще не завершилась
+          try {
+            const stored = localStorage.getItem('products-storage');
+            if (stored) {
+              const parsed = JSON.parse(stored);
+              if (parsed.state && parsed.state.products && parsed.state.products.length > 0) {
+                console.log('Found products in localStorage, merging with API products');
+                const localStorageProducts = parsed.state.products;
+                const existingIds = new Set(localStorageProducts.map((p: Product) => p.id));
+                const newProducts = products.filter(p => !existingIds.has(p.id));
+                const mergedProducts = [...localStorageProducts, ...newProducts];
+                console.log('Merged localStorage and API products, total:', mergedProducts.length);
+                return {
+                  products: mergedProducts,
+                  hasLoadedFromAPI: true
+                };
+              }
+            }
+          } catch (err) {
+            console.error('Error checking localStorage in setProducts:', err);
+          }
+          
+          // Только если продуктов нет ни в store, ни в localStorage (первая загрузка),
+          // устанавливаем продукты из API
+          console.log('No existing products found, setting API products');
           return { 
             products,
             hasLoadedFromAPI: true 
@@ -79,6 +109,10 @@ export const useProductsStore = create<ProductsState>()(
           return {
             products: updatedProducts,
             currentPage: 1, // Сбрасываем на первую страницу, чтобы новый товар был виден
+            // Если продуктов еще не было загружено из API, но пользователь создал продукт,
+            // устанавливаем флаг, чтобы предотвратить загрузку из API при следующем визите
+            // (но только если продуктов нет - иначе сохраняем текущее значение)
+            hasLoadedFromAPI: currentState.products.length === 0 ? false : currentState.hasLoadedFromAPI,
           };
         });
         // Проверяем, что состояние обновилось

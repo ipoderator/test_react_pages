@@ -36,28 +36,38 @@ export default function ProductsPage() {
 
   useEffect(() => {
     const loadProducts = async () => {
-      // Небольшая задержка для обеспечения завершения гидратации Zustand
-      // Это важно, чтобы не перезаписать созданные пользователем продукты
-      await new Promise(resolve => setTimeout(resolve, 100));
+      // Увеличиваем задержку для гарантированного завершения гидратации Zustand
+      // Это критически важно, чтобы не перезаписать созданные пользователем продукты
+      await new Promise(resolve => setTimeout(resolve, 300));
       
-      // Проверяем состояние после возможной гидратации
+      // Проверяем состояние после гидратации
       const currentState = useProductsStore.getState();
+      console.log('loadProducts: hasLoadedFromAPI =', currentState.hasLoadedFromAPI);
+      console.log('loadProducts: products count =', currentState.products.length);
       
       // Если уже есть продукты в store (из localStorage или созданные пользователем),
       // и они были загружены из API ранее, не загружаем снова
       if (currentState.hasLoadedFromAPI) {
+        console.log('Products already loaded from API, skipping fetch');
         setLoading(false);
         return;
       }
       
-      // Если есть продукты, но hasLoadedFromAPI = false, это значит они созданы пользователем
-      // В этом случае все равно загружаем из API, но setProducts объединит их
+      // Если есть продукты в store (из localStorage), но hasLoadedFromAPI = false,
+      // это значит они созданы пользователем и API еще не загружался.
+      // В этом случае загружаем из API, но setProducts объединит их.
+      // Если продуктов нет вообще - загружаем из API как обычно.
       setLoading(true);
       try {
+        console.log('Fetching products from API...');
         const fetchedProducts = await fetchProducts();
+        console.log('Fetched products count:', fetchedProducts.length);
         // fetchProducts теперь возвращает пустой массив при ошибке, а не выбрасывает исключение
         if (fetchedProducts.length > 0) {
           setProducts(fetchedProducts);
+          console.log('Products set, total count after merge:', useProductsStore.getState().products.length);
+        } else {
+          console.log('API returned empty array or error occurred');
         }
         // Если пустой массив - это значит API недоступен, но приложение продолжит работать
       } catch (error) {
@@ -71,6 +81,9 @@ export default function ProductsPage() {
     // Это позволит сохранить созданные пользователем продукты
     if (!hasLoadedFromAPI) {
       loadProducts();
+    } else {
+      // Если уже загружено из API, просто убеждаемся, что loading = false
+      setLoading(false);
     }
   }, [hasLoadedFromAPI, setProducts, setLoading]);
 
