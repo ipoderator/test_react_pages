@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { useProductsStore } from '@/store/productsStore';
 
@@ -11,17 +11,6 @@ interface FormErrors {
   category?: string;
   image?: string;
 }
-
-const CATEGORIES = [
-  'electronics',
-  'jewelery',
-  "men's clothing",
-  "women's clothing",
-  'Электроника',
-  'Ювелирные изделия',
-  'Мужская одежда',
-  'Женская одежда',
-];
 
 export default function CreateProductPage() {
   const router = useRouter();
@@ -35,6 +24,12 @@ export default function CreateProductPage() {
   });
   const [errors, setErrors] = useState<FormErrors>({});
   const [showCustomCategory, setShowCustomCategory] = useState(false);
+  
+  // Получаем категории из существующих продуктов
+  const categories = useMemo(() => {
+    const cats = new Set(products.map((p) => p.category));
+    return Array.from(cats).sort();
+  }, [products]);
 
   const validateForm = (): boolean => {
     const newErrors: FormErrors = {};
@@ -81,7 +76,6 @@ export default function CreateProductPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (validateForm()) {
-      // Сохраняем данные как есть, без дополнительной обработки для поддержки Unicode
       const productData = {
         title: formData.title.trim(),
         price: parseFloat(formData.price),
@@ -90,82 +84,15 @@ export default function CreateProductPage() {
         image: formData.image.trim(),
       };
       
-      // Логируем данные для отладки
-      console.log('Product data (UTF-8):', JSON.stringify(productData, null, 2));
-      
       try {
-        console.log('Form submitted, adding product...');
         // Добавляем продукт
         addProduct(productData);
         
-        // Ждем, чтобы Zustand успел сохранить в localStorage
-        // Проверяем несколько раз, что продукт был добавлен
-        let attempts = 0;
-        const maxAttempts = 30;
-        let productFound = false;
+        // Небольшая задержка для сохранения в localStorage
+        await new Promise(resolve => setTimeout(resolve, 100));
         
-        while (attempts < maxAttempts && !productFound) {
-          await new Promise(resolve => setTimeout(resolve, 100));
-          const currentState = useProductsStore.getState();
-          productFound = currentState.products.some(
-            p => p.title === productData.title && 
-                 Math.abs(p.price - productData.price) < 0.01 &&
-                 p.description === productData.description &&
-                 p.category === productData.category
-          );
-          
-          if (productFound) {
-            console.log('Product found in store, verifying localStorage...');
-            
-            // Проверяем, что продукт действительно сохранен в localStorage
-            // Zustand persist сохраняет в localStorage с ключом 'products-storage'
-            let localStorageVerified = false;
-            let verifyAttempts = 0;
-            while (verifyAttempts < 10 && !localStorageVerified) {
-              await new Promise(resolve => setTimeout(resolve, 100));
-              try {
-                const stored = localStorage.getItem('products-storage');
-                if (stored) {
-                  const parsed = JSON.parse(stored);
-                  if (parsed.state && parsed.state.products) {
-                    const hasProduct = parsed.state.products.some(
-                      (p: any) => p.title === productData.title &&
-                                  Math.abs(p.price - productData.price) < 0.01 &&
-                                  p.description === productData.description &&
-                                  p.category === productData.category
-                    );
-                    if (hasProduct) {
-                      localStorageVerified = true;
-                      console.log('Product verified in localStorage');
-                    }
-                  }
-                }
-              } catch (err) {
-                console.error('Error checking localStorage:', err);
-              }
-              verifyAttempts++;
-            }
-            
-            if (localStorageVerified) {
-              console.log('Product successfully saved, redirecting...');
-              // Используем router.push для навигации
-              router.push('/products');
-              return;
-            } else {
-              console.warn('Product not found in localStorage, but found in store. Redirecting anyway...');
-              // Все равно редиректим, так как продукт есть в store
-              await new Promise(resolve => setTimeout(resolve, 200));
-              router.push('/products');
-              return;
-            }
-          }
-          attempts++;
-        }
-        
-        if (!productFound) {
-          console.error('Product was not added after multiple attempts');
-          alert('Ошибка: продукт не был добавлен. Проверьте консоль браузера для подробностей.');
-        }
+        // Редирект на страницу продуктов
+        router.push('/products');
       } catch (error) {
         console.error('Error adding product:', error);
         alert('Произошла ошибка при создании продукта. Попробуйте еще раз.');
@@ -182,7 +109,7 @@ export default function CreateProductPage() {
     }
     
     // Если выбрана категория из списка, скрываем поле для ввода своей категории
-    if (name === 'category' && value && CATEGORIES.includes(value)) {
+    if (name === 'category' && value && categories.includes(value)) {
       setShowCustomCategory(false);
     }
   };
@@ -285,11 +212,20 @@ export default function CreateProductPage() {
                     }`}
                   >
                     <option value="">Выберите категорию</option>
-                    {CATEGORIES.map((cat) => (
-                      <option key={cat} value={cat}>
-                        {cat}
-                      </option>
-                    ))}
+                    {categories.length > 0 ? (
+                      categories.map((cat) => (
+                        <option key={cat} value={cat}>
+                          {cat}
+                        </option>
+                      ))
+                    ) : (
+                      <>
+                        <option value="electronics">electronics</option>
+                        <option value="jewelery">jewelery</option>
+                        <option value="men's clothing">men's clothing</option>
+                        <option value="women's clothing">women's clothing</option>
+                      </>
+                    )}
                     <option value="custom">Ввести свою категорию</option>
                   </select>
                   {errors.category && <p className="mt-1 text-sm text-red-500">{errors.category}</p>}
