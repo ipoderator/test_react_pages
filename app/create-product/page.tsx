@@ -75,83 +75,82 @@ export default function CreateProductPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (validateForm()) {
-      const productData = {
-        title: formData.title.trim(),
-        price: parseFloat(formData.price),
-        description: formData.description.trim(),
-        category: formData.category.trim(),
-        image: formData.image.trim(),
-      };
+    if (!validateForm()) {
+      return;
+    }
+
+    const productData = {
+      title: formData.title.trim(),
+      price: parseFloat(formData.price),
+      description: formData.description.trim(),
+      category: formData.category.trim(),
+      image: formData.image.trim(),
+    };
+    
+    try {
+      console.log('Creating product:', productData);
       
-      try {
-        console.log('Creating product:', productData);
-        
-        // Добавляем продукт
-        addProduct(productData);
-        
-        // Даем время для первоначального сохранения
-        await new Promise(resolve => setTimeout(resolve, 200));
-        
-        // Ждем, пока Zustand сохранит в localStorage
-        // Проверяем несколько раз, что продукт был добавлен и сохранен
-        let attempts = 0;
-        const maxAttempts = 30;
-        let productSaved = false;
-        
-        while (attempts < maxAttempts && !productSaved) {
-          await new Promise(resolve => setTimeout(resolve, 100));
-          
-          // Проверяем, что продукт есть в store
-          const currentState = useProductsStore.getState();
-          const productExists = currentState.products.some(
-            p => p.title === productData.title && 
-                 Math.abs(p.price - productData.price) < 0.01 &&
-                 p.description === productData.description &&
-                 p.category === productData.category
-          );
-          
-          if (productExists) {
-            // Проверяем, что продукт сохранен в localStorage
-            try {
-              const stored = localStorage.getItem('products-storage');
-              if (stored) {
-                const parsed = JSON.parse(stored);
-                if (parsed.state && parsed.state.products) {
-                  const hasProduct = parsed.state.products.some(
-                    (p: any) => p.title === productData.title &&
-                                Math.abs(p.price - productData.price) < 0.01 &&
-                                p.description === productData.description &&
-                                p.category === productData.category
-                  );
-                  if (hasProduct) {
-                    console.log('Product saved successfully in localStorage');
-                    productSaved = true;
-                    break;
-                  }
-                }
-              }
-            } catch (err) {
-              console.error('Error checking localStorage:', err);
+      // Добавляем продукт в store
+      addProduct(productData);
+      
+      // Даем время для сохранения в Zustand persist (localStorage)
+      // Zustand persist сохраняет асинхронно, поэтому нужно подождать
+      await new Promise(resolve => setTimeout(resolve, 300));
+      
+      // Проверяем, что продукт действительно добавлен в store
+      const currentState = useProductsStore.getState();
+      const productExists = currentState.products.some(
+        p => p.title === productData.title && 
+             Math.abs(p.price - productData.price) < 0.01 &&
+             p.description === productData.description &&
+             p.category === productData.category
+      );
+      
+      if (!productExists) {
+        console.error('Product was not added to store');
+        alert('Ошибка: продукт не был добавлен. Попробуйте еще раз.');
+        return;
+      }
+      
+      // Проверяем, что продукт сохранен в localStorage
+      let savedInStorage = false;
+      let attempts = 0;
+      while (!savedInStorage && attempts < 20) {
+        await new Promise(resolve => setTimeout(resolve, 100));
+        try {
+          const stored = localStorage.getItem('products-storage');
+          if (stored) {
+            const parsed = JSON.parse(stored);
+            if (parsed.state && parsed.state.products) {
+              savedInStorage = parsed.state.products.some(
+                (p: any) => p.title === productData.title &&
+                            Math.abs(p.price - productData.price) < 0.01 &&
+                            p.description === productData.description &&
+                            p.category === productData.category
+              );
             }
           }
-          
-          attempts++;
+        } catch (err) {
+          console.error('Error checking localStorage:', err);
         }
-        
-        if (productSaved) {
-          console.log('Product created successfully, redirecting...');
-        } else {
-          console.warn('Product may not have been saved, but redirecting anyway...');
-          // Даем дополнительное время для сохранения
-          await new Promise(resolve => setTimeout(resolve, 500));
-        }
-        
-        router.push('/products');
-      } catch (error) {
-        console.error('Error adding product:', error);
-        alert('Произошла ошибка при создании продукта. Попробуйте еще раз.');
+        attempts++;
       }
+      
+      if (savedInStorage) {
+        console.log('Product saved successfully in localStorage');
+      } else {
+        console.warn('Product may not be saved in localStorage yet, but proceeding...');
+        // Даем дополнительное время для сохранения
+        await new Promise(resolve => setTimeout(resolve, 300));
+      }
+      
+      // Используем window.location для полной перезагрузки страницы
+      // Это гарантирует, что компонент получит обновленное состояние из localStorage
+      // При полной перезагрузке страницы Zustand загрузит данные из localStorage
+      window.location.href = '/products';
+    } catch (error) {
+      console.error('Error adding product:', error);
+      alert('Произошла ошибка при создании продукта. Попробуйте еще раз.');
     }
   };
 
