@@ -56,14 +56,15 @@ export const useProductsStore = create<ProductsState>()(
         });
       },
       addProduct: (productData) => {
-        const newId = get().getNextId();
+        const state = get();
+        const newId = state.getNextId();
         const newProduct: Product = {
           ...productData,
           id: newId,
           rating: { rate: 0, count: 0 },
         };
-        set((state) => ({
-          products: [newProduct, ...state.products],
+        set((currentState) => ({
+          products: [newProduct, ...currentState.products],
           currentPage: 1, // Сбрасываем на первую страницу, чтобы новый товар был виден
         }));
       },
@@ -109,6 +110,17 @@ export const useProductsStore = create<ProductsState>()(
         favorites: state.favorites,
         hasLoadedFromAPI: state.hasLoadedFromAPI,
       }),
+      skipHydration: false,
+      onRehydrateStorage: () => (state) => {
+        console.log('hydration starts');
+        return (state, error) => {
+          if (error) {
+            console.log('an error happened during hydration', error);
+          } else {
+            console.log('hydration finished', state);
+          }
+        };
+      },
     }
   )
 );

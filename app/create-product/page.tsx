@@ -14,7 +14,7 @@ interface FormErrors {
 
 export default function CreateProductPage() {
   const router = useRouter();
-  const { addProduct } = useProductsStore();
+  const { addProduct, products } = useProductsStore();
   const [formData, setFormData] = useState({
     title: '',
     price: '',
@@ -76,9 +76,13 @@ export default function CreateProductPage() {
         category: formData.category.trim(),
         image: formData.image.trim(),
       };
+      const previousCount = products.length;
       addProduct(productData);
-      // Небольшая задержка для сохранения состояния перед редиректом
-      await new Promise(resolve => setTimeout(resolve, 100));
+      // Увеличиваем задержку для гарантированного сохранения состояния перед редиректом
+      await new Promise(resolve => setTimeout(resolve, 300));
+      // Проверяем, что продукт был добавлен
+      const currentCount = useProductsStore.getState().products.length;
+      console.log('Products before:', previousCount, 'Products after:', currentCount);
       router.push('/products');
     }
   };
