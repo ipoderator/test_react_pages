@@ -38,7 +38,7 @@ export const useProductsStore = create<ProductsState>()(
       isLoading: false,
       searchQuery: '',
       categoryFilter: '',
-      priceRange: { min: 0, max: 10000 },
+      priceRange: { min: 0, max: 100000 },
       currentPage: 1,
       itemsPerPage: 12,
       hasLoadedFromAPI: false,
@@ -109,12 +109,19 @@ export const useProductsStore = create<ProductsState>()(
           const updatedProducts = [newProduct, ...currentState.products];
           console.log('Updated products count:', updatedProducts.length);
           console.log('First product in list:', updatedProducts[0]);
+          // Расширяем диапазон цены, чтобы новый продукт точно попадал в выборку
+          const newMaxPrice = Math.max(currentState.priceRange.max, productData.price);
+          const newMinPrice = Math.min(currentState.priceRange.min, productData.price);
+          
           return {
             products: updatedProducts,
             currentPage: 1, // Сбрасываем на первую страницу, чтобы новый товар был виден
             searchQuery: '', // Сбрасываем поиск, чтобы новый продукт был виден
             categoryFilter: '', // Сбрасываем фильтр категории, чтобы новый продукт был виден
-            priceRange: { min: 0, max: 10000 }, // Сбрасываем фильтр цены, чтобы новый продукт был виден
+            priceRange: { 
+              min: newMinPrice, 
+              max: newMaxPrice // Расширяем максимум, чтобы новый продукт был виден
+            },
             filter: 'all', // Сбрасываем фильтр на "Все товары", чтобы новый продукт был виден
             // Если продуктов еще не было загружено из API, но пользователь создал продукт,
             // устанавливаем флаг, чтобы предотвратить загрузку из API при следующем визите
