@@ -30,6 +30,10 @@ const nextConfig = {
       },
     ],
   },
+  experimental: {
+    // Disable static optimization for dynamic routes in static export
+    missingSuspenseWithCSRBailout: false,
+  },
 }
 
 module.exports = nextConfig
